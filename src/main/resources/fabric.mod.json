@@ -1,0 +1,37 @@
+{
+	"schemaVersion": 1,
+	"id": "savestate",
+	"version": "${version}",
+	"name": "Savestate",
+	"description": "This is a mod that is used to save a state and load it to make the most seamless cuts",
+	"authors": [
+		"masterwyatt, GoldenSplasherYT"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "MIT",
+	"icon": "assets/savestate/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"net.mastersplasher.savestate.Savestate"
+		],
+		"fabric-datagen": [
+			"net.mastersplasher.savestate.SavestateDataGenerator"
+		],
+		"client": [
+			"net.mastersplasher.savestate.SavestateClient"
+		]
+	},
+	"mixins": [
+		"savestate.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.18.5",
+		"minecraft": "~26.1",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}
