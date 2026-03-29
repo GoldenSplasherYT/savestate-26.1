@@ -10,6 +10,7 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.level.block.entity.vault.VaultBlockEntity;
 import org.lwjgl.glfw.GLFW;
 
 public class SavestateClient implements ClientModInitializer {

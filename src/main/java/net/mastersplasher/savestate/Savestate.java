@@ -21,6 +21,8 @@ public class Savestate implements ModInitializer {
 			context.server().execute(() -> {
 				var tickManager = context.server().tickRateManager();
 				tickManager.setFrozen(SavestateClient.isFrozen);
+
+
 			});
 		}));
 	}
