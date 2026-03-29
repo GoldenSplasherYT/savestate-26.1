@@ -5,7 +5,9 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.mastersplasher.savestate.Payload.LoadPayload;
 import net.mastersplasher.savestate.Payload.PausePayload;
+import net.mastersplasher.savestate.Payload.SavePayload;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -83,12 +85,14 @@ public class SavestateClient implements ClientModInitializer {
                         client.player.sendSystemMessage(Component.literal("Savestate CANNOT be saved, as Game is not Frozen"));
                     }
                 }
+                ClientPlayNetworking.send(new SavePayload());
             }
 
             while (loadstateKey.consumeClick()) {
                 if (client.player != null) {
                     client.player.sendSystemMessage(Component.literal("Savestate loaded"));
                 }
+                ClientPlayNetworking.send(new LoadPayload());
             }
         });
 
