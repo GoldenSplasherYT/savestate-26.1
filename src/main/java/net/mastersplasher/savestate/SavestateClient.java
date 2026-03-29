@@ -64,7 +64,7 @@ public class SavestateClient implements ClientModInitializer {
                         client.player.sendSystemMessage(Component.literal("Game is Frozen!"));
                     } else {
                         isFrozen = false;
-                        client.player.sendSystemMessage(Component.literal("Game is not Frozen!"));
+                        client.player.sendSystemMessage(Component.literal("Game has now resumed!"));
                     }
                 }
             }
