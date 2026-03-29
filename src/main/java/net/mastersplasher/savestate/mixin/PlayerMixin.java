@@ -15,6 +15,4 @@ public class PlayerMixin {
             ci.cancel();
         }
     }
-
-
 }
