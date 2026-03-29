@@ -3,14 +3,18 @@ package net.mastersplasher.savestate;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;import net.minecraft.client.KeyMapping;
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.mastersplasher.savestate.Payload.PausePayload;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.MinecraftServer;
 import org.lwjgl.glfw.GLFW;
 
 public class SavestateClient implements ClientModInitializer {
 
-    boolean isFrozen = false;
+    public static boolean isFrozen = false;
 
     KeyMapping.Category CATEGORY = new KeyMapping.Category(
             Identifier.fromNamespaceAndPath(Savestate.MOD_ID, "savestate_keybinds")
@@ -64,8 +68,9 @@ public class SavestateClient implements ClientModInitializer {
                         client.player.sendSystemMessage(Component.literal("Game is Frozen!"));
                     } else {
                         isFrozen = false;
-                        client.player.sendSystemMessage(Component.literal("Game is not Frozen!"));
+                        client.player.sendSystemMessage(Component.literal("Game has now resumed!"));
                     }
+                    ClientPlayNetworking.send(new PausePayload());
                 }
             }
 
@@ -74,7 +79,7 @@ public class SavestateClient implements ClientModInitializer {
                     if (isFrozen) {
                         client.player.sendSystemMessage(Component.literal("Savestate saved"));
                     } else {
-                        client.player.sendSystemMessage(Component.literal("Game is not Frozen"));
+                        client.player.sendSystemMessage(Component.literal("Savestate CANNOT be saved, as Game is not Frozen"));
                     }
                 }
             }
