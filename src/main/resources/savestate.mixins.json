@@ -12,7 +12,8 @@
     "requireAnnotations": true
   },
   "client": [
-    "HumanoidModelMixin",
-    "MouseMovementMixin"
+    "ClientAvatarStateMixin",
+    "MouseMovementMixin",
+    "PlayerModelMixin"
   ]
 }
