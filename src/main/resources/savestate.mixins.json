@@ -3,7 +3,10 @@
 	"package": "net.mastersplasher.savestate.mixin",
 	"compatibilityLevel": "JAVA_25",
 	"mixins": [
-		"ExampleMixin"
+		"ExampleMixin",
+		"EndGatewayMixin",
+		"TNTMixin",
+		"BonusChestMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

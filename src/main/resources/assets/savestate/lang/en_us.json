@@ -1,4 +1,7 @@
 {
   "key.category.savestate.savestate_keybinds": "Savestate Keybinds",
-  "key.savestate.send_to_chat": "Send to Chat"
+  "key.savestate.send_to_chat": "Send To Chat",
+  "key.savestate.toggle_freeze": "Toggle Freeze",
+  "key.savestate.savestate": "Savestate",
+  "key.savestate.loadstate": "Loadstate"
 }
