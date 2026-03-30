@@ -11,6 +11,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class ClientLevelMixin {
     @Inject(method = "tickEntities", at = @At("HEAD"), cancellable = true)
     private void onTickEntities(CallbackInfo ci) {
-        if (SavestateClient.isFrozen) ci.cancel();
+        if (SavestateClient.isFrozen) {
+            ci.cancel();
+        }
     }
 }

@@ -11,6 +11,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class GameRendererMixin {
     @Inject(method = "tick", at = @At("HEAD"), cancellable = true)
     private void onTick(CallbackInfo ci) {
-        if (SavestateClient.isFrozen) ci.cancel();
+        if (SavestateClient.isFrozen) {
+            ci.cancel();
+        }
     }
 }

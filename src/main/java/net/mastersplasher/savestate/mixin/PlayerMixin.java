@@ -11,7 +11,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class PlayerMixin {
     @Inject(method = "tick", at = @At(value = "HEAD"), cancellable = true)
     private void tick(CallbackInfo ci) {
-        //System.out.println("Current position: " + ((Player)(Object)this).position().toString() + "Old position" + ((Player)(Object)this).oldPosition().toString());
         if (SavestateClient.isFrozen) {
             ci.cancel();
         }

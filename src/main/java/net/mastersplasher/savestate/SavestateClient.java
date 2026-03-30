@@ -5,7 +5,8 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.mastersplasher.savestate.Payload.PausePayload;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import net.mastersplasher.savestate.meow.PausePayload;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -14,20 +15,12 @@ import net.minecraft.resources.Identifier;
 import org.lwjgl.glfw.GLFW;
 
 public class SavestateClient implements ClientModInitializer {
-
-    public static boolean isFrozen = false;
+    public static boolean isFrozen;
+    public static boolean isDeltaTickFrozen;
 
     KeyMapping.Category CATEGORY = new KeyMapping.Category(
             Identifier.fromNamespaceAndPath(Savestate.MOD_ID, "savestate_keybinds")
     );
-
-    KeyMapping sendToChatKey = KeyMappingHelper.registerKeyMapping(
-            new KeyMapping(
-                    "key.savestate.send_to_chat",
-                    InputConstants.Type.KEYSYM,
-                    GLFW.GLFW_KEY_J,
-                    CATEGORY
-            ));
 
     KeyMapping toggleFreezeKey = KeyMappingHelper.registerKeyMapping(
             new KeyMapping(
@@ -55,28 +48,21 @@ public class SavestateClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        PayloadTypeRegistry.clientboundPlay().register(PausePayload.ID, PausePayload.CODEC);
+
+        ClientPlayNetworking.registerGlobalReceiver(PausePayload.ID, (payload, context) -> {
+            Minecraft.getInstance().execute(() -> {
+                boolean frozen = payload.frozen();
+                setFrozen(frozen);
+            });
+        });
+
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            while (sendToChatKey.consumeClick()) {
-                if (client.player != null) {
-                    client.player.sendSystemMessage(Component.literal("Key was pressed!"));
-                }
-            }
-
             while (toggleFreezeKey.consumeClick()) {
-                Minecraft mc = Minecraft.getInstance();
                 if (client.player != null) {
-                    if (!isFrozen) {
-                        ((DeltaTracker.Timer)mc.getDeltaTracker()).updatePauseState(true);
-
-                        isFrozen = true;
-                        client.player.sendSystemMessage(Component.literal("Game is Frozen!"));
-                    } else {
-                        isFrozen = false;
-                        ((DeltaTracker.Timer)mc.getDeltaTracker()).updatePauseState(false);
-
-                        client.player.sendSystemMessage(Component.literal("Game has now resumed!"));
-                    }
-                    ClientPlayNetworking.send(new PausePayload());
+                    boolean desired = !isFrozen;
+                    setFrozen(desired);
+                    ClientPlayNetworking.send(new PausePayload(desired));
                 }
             }
 
@@ -96,6 +82,29 @@ public class SavestateClient implements ClientModInitializer {
                 }
             }
         });
+    }
 
+    private void setFrozen(boolean frozen) {
+        Minecraft mc = Minecraft.getInstance();
+        if (frozen) {
+            ((DeltaTracker.Timer)mc.getDeltaTracker()).updatePauseState(true);
+            isFrozen = true;
+            isDeltaTickFrozen = true;
+            if (Minecraft.getInstance().level != null) {
+                Minecraft.getInstance().level.tickRateManager().setFrozen(true);
+            }
+            if (mc.player != null) {
+                mc.player.sendSystemMessage(Component.literal("Game is Frozen!"));
+            }
+        } else {
+            isFrozen = false;
+            if (Minecraft.getInstance().level != null) {
+                Minecraft.getInstance().level.tickRateManager().setFrozen(false);
+            }
+            ((DeltaTracker.Timer)mc.getDeltaTracker()).updatePauseState(false);
+            if (mc.player != null) {
+                mc.player.sendSystemMessage(Component.literal("Game has now resumed!"));
+            }
+        }
     }
 }

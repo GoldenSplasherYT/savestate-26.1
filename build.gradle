@@ -39,7 +39,7 @@ dependencies {
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
-	compileOnly "maven.modrinth:fadeless:2.0.7-26.1"
+    implementation "maven.modrinth:fadeless:2.0.7-26.1"
 }
 
 processResources {

@@ -16,6 +16,7 @@
     "GameRendererMixin",
     "MouseMovementMixin",
     "PlayerModelMixin",
-    "TimerMixin"
+    "TimerMixin",
+    "EntityRendererMixin"
   ]
 }
