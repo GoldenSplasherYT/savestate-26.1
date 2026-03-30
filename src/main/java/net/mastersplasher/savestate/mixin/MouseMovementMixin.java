@@ -2,6 +2,7 @@ package net.mastersplasher.savestate.mixin;
 
 import net.mastersplasher.savestate.SavestateClient;
 import net.minecraft.client.MouseHandler;
+import net.minecraft.client.input.MouseButtonInfo;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -22,6 +23,13 @@ public class MouseMovementMixin {
         if (SavestateClient.isFrozen) {
             accumulatedDX = 0;
             accumulatedDY = 0;
+            ci.cancel();
+        }
+    }
+
+    @Inject(method = "onButton", at = @At("HEAD"), cancellable = true)
+    private void onButton(long handle, MouseButtonInfo rawButtonInfo, int action, CallbackInfo ci) {
+        if (SavestateClient.isFrozen) {
             ci.cancel();
         }
     }
