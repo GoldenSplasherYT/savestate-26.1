@@ -14,6 +14,7 @@
 	"license": "MIT",
 	"icon": "assets/savestate/icon.png",
 	"environment": "*",
+	"accessWidener": "savestate.classtweaker",
 	"entrypoints": {
 		"main": [
 			"net.mastersplasher.savestate.Savestate"

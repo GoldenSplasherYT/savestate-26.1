@@ -65,6 +65,10 @@ jar {
 	}
 }
 
+loom {
+	accessWidenerPath = file("src/main/resources/savestate.classtweaker")
+}
+
 // configure the maven publication
 publishing {
 	publications {

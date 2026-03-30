@@ -12,8 +12,10 @@
     "requireAnnotations": true
   },
   "client": [
-    "ClientAvatarStateMixin",
+    "ClientLevelMixin",
+    "GameRendererMixin",
     "MouseMovementMixin",
-    "PlayerModelMixin"
+    "PlayerModelMixin",
+    "TimerMixin"
   ]
 }

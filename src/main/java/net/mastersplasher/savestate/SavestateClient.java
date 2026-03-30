@@ -6,11 +6,11 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.mastersplasher.savestate.Payload.PausePayload;
+import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.level.block.entity.vault.VaultBlockEntity;
 import org.lwjgl.glfw.GLFW;
 
 public class SavestateClient implements ClientModInitializer {
@@ -63,12 +63,17 @@ public class SavestateClient implements ClientModInitializer {
             }
 
             while (toggleFreezeKey.consumeClick()) {
+                Minecraft mc = Minecraft.getInstance();
                 if (client.player != null) {
                     if (!isFrozen) {
+                        ((DeltaTracker.Timer)mc.getDeltaTracker()).updatePauseState(true);
+
                         isFrozen = true;
                         client.player.sendSystemMessage(Component.literal("Game is Frozen!"));
                     } else {
                         isFrozen = false;
+                        ((DeltaTracker.Timer)mc.getDeltaTracker()).updatePauseState(false);
+
                         client.player.sendSystemMessage(Component.literal("Game has now resumed!"));
                     }
                     ClientPlayNetworking.send(new PausePayload());
