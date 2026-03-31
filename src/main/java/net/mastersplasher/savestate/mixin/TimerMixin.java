@@ -30,6 +30,7 @@ public class TimerMixin {
         }
         return ignoreFrozenGame;
     }
+
     @Inject(method = "updateFrozenState", at = @At("HEAD"))
     private void updateFrozenState(boolean frozenState, CallbackInfo ci) {
         if (!frozenState && !SavestateClient.isFrozen) {

@@ -6,7 +6,9 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import net.mastersplasher.savestate.meow.LoadPayload;
 import net.mastersplasher.savestate.meow.PausePayload;
+import net.mastersplasher.savestate.meow.SavePayload;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -50,12 +52,10 @@ public class SavestateClient implements ClientModInitializer {
     public void onInitializeClient() {
         PayloadTypeRegistry.clientboundPlay().register(PausePayload.ID, PausePayload.CODEC);
 
-        ClientPlayNetworking.registerGlobalReceiver(PausePayload.ID, (payload, context) -> {
-            Minecraft.getInstance().execute(() -> {
-                boolean frozen = payload.frozen();
-                setFrozen(frozen);
-            });
-        });
+        ClientPlayNetworking.registerGlobalReceiver(PausePayload.ID, (payload, _) -> Minecraft.getInstance().execute(() -> {
+            boolean frozen = payload.frozen();
+            setFrozen(frozen);
+        }));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (toggleFreezeKey.consumeClick()) {
@@ -70,6 +70,7 @@ public class SavestateClient implements ClientModInitializer {
                 if (client.player != null) {
                     if (isFrozen) {
                         client.player.sendSystemMessage(Component.literal("Savestate saved"));
+                        ClientPlayNetworking.send(new SavePayload());
                     } else {
                         client.player.sendSystemMessage(Component.literal("Savestate CANNOT be saved, as Game is not Frozen"));
                     }
@@ -79,6 +80,12 @@ public class SavestateClient implements ClientModInitializer {
             while (loadstateKey.consumeClick()) {
                 if (client.player != null) {
                     client.player.sendSystemMessage(Component.literal("Savestate loaded"));
+                }
+                ClientPlayNetworking.send(new LoadPayload());
+
+                if (!isFrozen) {
+                    setFrozen(true);
+                    ClientPlayNetworking.send(new PausePayload(true));
                 }
             }
         });
