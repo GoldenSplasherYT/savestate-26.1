@@ -1,4 +1,4 @@
-package net.mastersplasher.savestate.meow;
+package net.mastersplasher.savestate.payload;
 
 import net.mastersplasher.savestate.Savestate;
 import net.minecraft.network.RegistryFriendlyByteBuf;
