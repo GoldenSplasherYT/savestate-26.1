@@ -6,6 +6,9 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.mastersplasher.savestate.payload.LoadPayload;
 import net.mastersplasher.savestate.payload.PausePayload;
 import net.mastersplasher.savestate.payload.SavePayload;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,9 +26,7 @@ public class Savestate implements ModInitializer {
 		PayloadTypeRegistry.serverboundPlay().register(SavePayload.ID, SavePayload.CODEC);
 		PayloadTypeRegistry.serverboundPlay().register(LoadPayload.ID, LoadPayload.CODEC);
 
-		AtomicReference<Double> playerX = new AtomicReference<>(0.0);
-		AtomicReference<Double> playerY = new AtomicReference<>(0.0);
-		AtomicReference<Double> playerZ = new AtomicReference<>(0.0);
+		CompoundTag saveState = new CompoundTag();
 
 
 		ServerPlayNetworking.registerGlobalReceiver(PausePayload.ID, ((payload, context) -> context.server().execute(() -> {
@@ -45,22 +46,20 @@ public class Savestate implements ModInitializer {
             var server = context.server();
 			ServerPlayer player = server.getPlayerList().getPlayers().getFirst();
 
-			playerX.set(player.getX());
-			playerY.set(player.getY());
-			playerZ.set(player.getZ());
+			saveState.keySet().clear();
 
-			System.out.println(playerX.get());
-			System.out.println(playerY.get());
-			System.out.println(playerZ.get());
+			saveState.putDouble("playerX", player.getX());
+			saveState.putDouble("playerY", player.getY());
+			saveState.putDouble("playerZ", player.getZ());
+			saveState.putFloat("playerYaw", player.getYRot());
+			saveState.putFloat("playerPitch", player.getXRot());
         })));
 
 		ServerPlayNetworking.registerGlobalReceiver(LoadPayload.ID, ((payload, context) -> context.server().execute(() -> {
 			var server = context.server();
 			ServerPlayer player = server.getPlayerList().getPlayers().getFirst();
 
-			player.teleportTo(playerX.get(), playerY.get(), playerZ.get());
-
-			System.out.println("Player is teleported to: x - " + playerX.get() + " y - " + playerY.get() + ", z - " + playerZ.get());
+			player.teleportTo(saveState.getDoubleOr("x", player.getX()), saveState.getDoubleOr("y", player.getY()), saveState.getDoubleOr("z", player.getZ()));
 		})));
 	}
 }
