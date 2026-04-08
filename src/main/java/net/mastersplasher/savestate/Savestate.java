@@ -80,44 +80,34 @@ public class Savestate implements ModInitializer {
 			saveState.putIntArray("BlockData", blockData);
 
 			ListTag entityList = new ListTag();
-			ServerLevel world = player.level();
-			int entityRadius = 64;
+			int entityRadiusSqr = 64 * 64;
 
-			for (Entity entity : world.getAllEntities()) {
-				if (entity instanceof Player) {
-					continue;
-				}
+			for (Entity entity : player.level().getAllEntities()) {
+				if (entity instanceof Player) continue;
 
-				if (entity.distanceToSqr(player) < (entityRadius * entityRadius)) {
-					TagValueOutput output = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, world.registryAccess());
-					entity.saveWithoutId(output);
+				if (entity.distanceToSqr(player) < entityRadiusSqr) {
+					TagValueOutput output = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, player.level().registryAccess());
 
-					entityList.add(output.buildResult());
+					entity.saveAsPassenger(output);
+					CompoundTag data = output.buildResult();
+
+					data.remove("UUID");
+
+					entityList.add(data);
 				}
 			}
 			saveState.put("Entities", entityList);
 
-//            try {
-//                save(server);
-//            } catch (IOException e) {
-//				LOGGER.error("Error Running Save Method: ", e);
-//            }
+			TagValueOutput playerOutput = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, player.level().registryAccess());
+			player.saveWithoutId(playerOutput);
+			saveState.put("FullPlayerData", playerOutput.buildResult());
+
+			saveState.putLong("SavedDayTime", player.level().getGameTime());
         })));
 
 		ServerPlayNetworking.registerGlobalReceiver(LoadPayload.ID, ((payload, context) -> context.server().execute(() -> {
 			var server = context.server();
 			ServerPlayer player = server.getPlayerList().getPlayers().getFirst();
-
-			player.teleportTo(
-					player.level(),
-					saveState.getDouble("playerX").get(),
-					saveState.getDouble("playerY").get(),
-					saveState.getDouble("playerZ").get(),
-					java.util.Set.of(),
-					saveState.getFloat("playerYaw").get(),
-					saveState.getFloat("playerPitch").get(),
-					true
-			);
 
 			int[] blockData = saveState.getIntArray("BlockData").get();
 			int anchorX = saveState.getIntOr("anchorX", 0);
@@ -140,14 +130,21 @@ public class Savestate implements ModInitializer {
 			}
 
 			ServerLevel world = player.level();
-			int entityRadius = 64;
+			int entityRadiusSqr = 64 * 64;
+			List<Entity> toDiscard = new ArrayList<>();
+
+			for (Entity e : world.getAllEntities()) {
+				if (!(e instanceof Player) && e.distanceToSqr(player) < entityRadiusSqr) {
+					toDiscard.add(e);
+				}
+			}
+			toDiscard.forEach(Entity::discard);
 
 			ListTag entityList = saveState.getListOrEmpty("Entities");
 
 			for (int i = 0; i < entityList.size(); i++) {
-				CompoundTag entityData = (CompoundTag) entityList.get(i);
-
-				TagValueInput input = (TagValueInput) TagValueInput.create(ProblemReporter.DISCARDING, world.registryAccess(), entityData);
+				CompoundTag entityData = entityList.getCompoundOrEmpty(i);
+				ValueInput input = TagValueInput.create(ProblemReporter.DISCARDING, world.registryAccess(), entityData);
 
 				EntityType.loadEntityRecursive(entityData, world, EntitySpawnReason.LOAD, (loadedEntity) -> {
 					loadedEntity.load(input);
@@ -157,13 +154,16 @@ public class Savestate implements ModInitializer {
 				});
 			}
 
-			for (Entity entity : world.getAllEntities()) {
-				if (!(entity instanceof Player) && entity.distanceToSqr(player) < (entityRadius * entityRadius)) {
-					entity.discard(); // Remove them from the world instantly
-				}
+			player.teleportTo(player.level(), saveState.getDouble("playerX").get(), saveState.getDouble("playerY").get(), saveState.getDouble("playerZ").get(), java.util.Set.of(), saveState.getFloat("playerYaw").get(), saveState.getFloat("playerPitch").get(), true);
+
+			CompoundTag playerData = saveState.getCompoundOrEmpty("FullPlayerData");
+			if (!playerData.isEmpty()) {
+				ValueInput playerInput = TagValueInput.create(ProblemReporter.DISCARDING, world.registryAccess(), playerData);
+				player.load(playerInput);
 			}
 
-//			loadSave(server);
+			long savedTime = saveState.getLongOr("SavedDayTime", world.getGameTime());
+			world.clockManager().setTotalTicks(world.registryAccess().get(WorldClocks.OVERWORLD).get(), savedTime);
 		})));
 	}
 }
