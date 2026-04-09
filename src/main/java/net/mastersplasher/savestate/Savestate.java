@@ -28,8 +28,9 @@ public class Savestate implements ModInitializer {
 		PayloadTypeRegistry.serverboundPlay().register(LoadPayload.ID, LoadPayload.CODEC);
 
 		CompoundTag saveState = new CompoundTag();
+		ListTag playerDataListTags = new ListTag();
 
-
+		// Freezes the Game
 		ServerPlayNetworking.registerGlobalReceiver(PausePayload.ID, ((payload, context) -> context.server().execute(() -> {
             var server = context.server();
             var tickManager = server.tickRateManager();
@@ -49,13 +50,28 @@ public class Savestate implements ModInitializer {
 
 			saveState.keySet().clear();
 
-			saveState.putDouble("playerX", player.getX());
-			saveState.putDouble("playerY", player.getY());
-			saveState.putDouble("playerZ", player.getZ());
-			saveState.putFloat("playerYaw", player.getYRot());
-			saveState.putFloat("playerPitch", player.getXRot());
+			saveState.putLong("SavedDayTime", player.level().getGameTime());
 
-			int radius = 50;
+			for (ServerPlayer serverPlayer : server.getPlayerList().getPlayers()) {
+				CompoundTag playerTag = new CompoundTag();
+
+				// Saving Player Data
+				playerTag.putString("playerUUID", String.valueOf(serverPlayer.getUUID()));
+
+				playerTag.putDouble("playerX", serverPlayer.getX());
+				playerTag.putDouble("playerY", serverPlayer.getY());
+				playerTag.putDouble("playerZ", serverPlayer.getZ());
+				playerTag.putFloat("playerYaw", serverPlayer.getYRot());
+				playerTag.putFloat("playerPitch", serverPlayer.getXRot());
+
+				TagValueOutput playerOutput = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, serverPlayer.level().registryAccess());
+				serverPlayer.saveWithoutId(playerOutput);
+				playerTag.put("FullPlayerData", playerOutput.buildResult());
+
+				playerDataListTags.add(playerTag);
+			}
+
+			int radius = 64;
 			BlockPos center = player.blockPosition();
 			BlockPos min = new BlockPos(center.getX() - radius, center.getY() - radius, center.getZ() - radius);
 			BlockPos max = new BlockPos(center.getX() + radius, center.getY() + radius, center.getZ() + radius);
@@ -97,12 +113,6 @@ public class Savestate implements ModInitializer {
 				}
 			}
 			saveState.put("Entities", entityList);
-
-			TagValueOutput playerOutput = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, player.level().registryAccess());
-			player.saveWithoutId(playerOutput);
-			saveState.put("FullPlayerData", playerOutput.buildResult());
-
-			saveState.putLong("SavedDayTime", player.level().getGameTime());
         })));
 
 		ServerPlayNetworking.registerGlobalReceiver(LoadPayload.ID, ((payload, context) -> context.server().execute(() -> {
@@ -154,12 +164,21 @@ public class Savestate implements ModInitializer {
 				});
 			}
 
-			player.teleportTo(player.level(), saveState.getDouble("playerX").get(), saveState.getDouble("playerY").get(), saveState.getDouble("playerZ").get(), java.util.Set.of(), saveState.getFloat("playerYaw").get(), saveState.getFloat("playerPitch").get(), true);
+			for (int i = 0; i < playerDataListTags.size(); i++) {
+				CompoundTag currentPlayer = playerDataListTags.getCompoundOrEmpty(i);
+				String stringUUID = String.valueOf(currentPlayer.get("playerUUID"));
 
-			CompoundTag playerData = saveState.getCompoundOrEmpty("FullPlayerData");
-			if (!playerData.isEmpty()) {
+				UUID playerUUID = UUID.fromString(stringUUID.substring(1, stringUUID.length() - 1));
+
+				ServerPlayer currentServerPlayer = server.getPlayerList().getPlayer(playerUUID);
+
+
+				CompoundTag playerData = currentPlayer.getCompoundOrEmpty("FullPlayerData");
+
 				ValueInput playerInput = TagValueInput.create(ProblemReporter.DISCARDING, world.registryAccess(), playerData);
-				player.load(playerInput);
+				currentServerPlayer.load(playerInput);
+
+				currentServerPlayer.teleportTo(currentServerPlayer.level(), currentPlayer.getDouble("playerX").get(), currentPlayer.getDouble("playerY").get(), currentPlayer.getDouble("playerZ").get(), java.util.Set.of(), currentPlayer.getFloat("playerYaw").get(), currentPlayer.getFloat("playerPitch").get(), true);
 			}
 
 			long savedTime = saveState.getLongOr("SavedDayTime", world.getGameTime());
